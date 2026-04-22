@@ -3,15 +3,18 @@ from django.http import JsonResponse
 from django.core import serializers
 import json
 import requests
+from datetime import datetime, timezone
+from decimal import Decimal
 
 from .models import Moneda, Activo, Precio
 
 API_KEY = 'CG-uUoTUiJ8EebZMvdQqoEdLGHi'
 VS_COIN = 'USD'
+ACTIVO = 'BTC'
 START_DATE = '2026-01-01'
-END_DATE = '2026-03-01'
+END_DATE = '2026-03-01' # Por ahora no estoy usando la fecha actual, asi que el numero de objetos creados debe mantenerse constante.
 
-def get_coins(request):
+def get_all_coins(request):
     if (request.method == 'GET'):
         data = serializers.serialize('json', Precio.objects.all())
         return JsonResponse(json.loads(data), safe=False)
@@ -19,10 +22,39 @@ def get_coins(request):
 def update_coins(request):
     if (request.method == 'GET'):
 
+        ## Aqui se crean los modelos que deberia ingresar el usuario en la seleccion de moneda.
+        ## Nota mental: Esta es la forma perezosa de hacerlo, se deberia cambiar a algo mas elaborado.
+        precios_a_crear = []
+
+        moneda, _ = Moneda.objects.update_or_create(nombre = VS_COIN)
+        activo, _ = Activo.objects.update_or_create(nombre = ACTIVO)
+
         url = f"https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency={VS_COIN}&from={START_DATE}&to={END_DATE}&x_cg_demo_api_key={API_KEY}"
         
         response = requests.get(url)
 
-        #data = serializers.serialize('json', Precio.objects.all())
-        #return JsonResponse(json.loads(data), safe=False)
-        return JsonResponse(json.loads(response.text))
+        ## Coingeko me da los precios y la fecha de esto, el problema es que la ultima esta en milisegundos y eso no es una informacion relevante para el proyecto.
+        ## Asi que se decidio solo obtener el dia y la hora en UTC timezone, por si en el futuro quiero usar esta, pero por ahora solo los dias.
+
+        json_data = json.loads(response.text)
+        prices_data = json_data['prices']
+
+        for timestamp_ms, precio in prices_data:
+            fecha = datetime.fromtimestamp(timestamp_ms / 1000, tz=timezone.utc)
+            precios_a_crear.append(Precio(
+                moneda=moneda,
+                activo=activo,
+                valor=Decimal(str(precio)),  # str() antes de Decimal para evitar imprecisión
+                fecha_precio=fecha
+        ))
+
+        nuevos_precios = Precio.objects.bulk_create(
+            precios_a_crear,
+            update_conflicts=True, # Que pasa cuando entra un duplicado? Esto deberia ayudar?
+            update_fields=['valor'],
+            unique_fields=['moneda', 'activo', 'fecha_precio']
+        )
+
+        data = json.loads(serializers.serialize('json', nuevos_precios))
+        # send json response with new object
+        return JsonResponse(data, safe=False)
