@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'coins.apps.CoinsConfig'
+    'coins.apps.CoinsConfig',
+    'dashboard.apps.DashboardConfig'
 ]
 
 MIDDLEWARE = [

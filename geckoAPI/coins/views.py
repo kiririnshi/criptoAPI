@@ -1,10 +1,12 @@
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.core import serializers
-import json
-import requests
 from datetime import datetime, timezone
 from decimal import Decimal
+import json
+import requests
+
+from django.core import serializers
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
+from django.template import loader
 
 from .models import Moneda, Activo, Precio
 
