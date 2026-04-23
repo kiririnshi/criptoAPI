@@ -1,8 +1,36 @@
-<html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>BTC / CLP</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
 <body>
 
-<h1>Hello World!</h1>
-<p>Welcome to my first Django project!</p>
+    <h1>Precio BTC en CLP</h1>
+    <div id="grafico" style="width:100%; height:500px;"></div>
+
+    <script>
+        const fechas = {{ fechas|safe }};
+        const valores = {{ valores|safe }};
+
+        const trace = {
+            x: fechas,
+            y: valores,
+            type: "scatter",
+            mode: "lines+markers",
+            name: "BTC/CLP",
+            line: { color: "orange" }
+        };
+
+        const layout = {
+            title: "Precio de Bitcoin en Pesos Chilenos",
+            xaxis: { title: "Fecha" },
+            yaxis: { title: "CLP" }
+        };
+
+        Plotly.newPlot("grafico", [trace], layout);
+    </script>
 
 </body>
 </html>

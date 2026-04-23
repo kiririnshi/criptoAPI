@@ -18,7 +18,31 @@ END_DATE = '2026-03-01' # Por ahora no estoy usando la fecha actual, asi que el 
 
 def get_graph(request):
     if(request.method == 'GET'):
+        moneda, _ = Moneda.objects.update_or_create(nombre = VS_COIN)
+        activo, _ = Activo.objects.update_or_create(nombre = ACTIVO)
+
+        precios = (
+            Precio.objects
+            .filter(moneda=moneda, activo=activo)
+            .order_by("fecha_precio")
+            .values("fecha_precio", "valor")
+        )
+
+        lista_valores = []
+        lista_fechas = []
+
+        for precio in precios:
+            lista_valores.append(precio["valor"])
+            lista_fechas.append(precio["fecha_precio"])
+        
+        context = {
+            "fechas": json.dumps(lista_fechas),
+            "valores": json.dumps(lista_valores),
+        }
+
         template = loader.get_template('index.html')
+        
+        
         return HttpResponse(template.render())
     
 def get_all_coins(request):
