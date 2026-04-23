@@ -4,9 +4,8 @@ import json
 import requests
 
 from django.core import serializers
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render
-from django.template import loader
 
 from .models import Moneda, Activo, Precio
 
@@ -32,18 +31,23 @@ def get_graph(request):
         lista_fechas = []
 
         for precio in precios:
-            lista_valores.append(precio["valor"])
-            lista_fechas.append(precio["fecha_precio"])
+            lista_valores.append(float(precio["valor"]))
+            lista_fechas.append(precio["fecha_precio"].strftime("%Y-%m-%d %H:%M:%S"))
         
         context = {
             "fechas": json.dumps(lista_fechas),
             "valores": json.dumps(lista_valores),
         }
 
-        template = loader.get_template('index.html')
-        
-        
-        return HttpResponse(template.render())
+        # datetime.datetime not JSON serializable
+        # La clase datetime de python no es aceptable para hacer un json, o sea no es json serializable.
+        # Por eso es mejor usar strftime para cambiar el formato antes de enviar
+        # A su vez pasa algo similar con los valores, json no acepta decimales, asi que se pasan a float para que funcione en ploty.
+
+        return render(request, "coins/index.html", context)
+    
+        #template = loader.get_template('index.html')
+        #return HttpResponse(template.render())
     
 def get_all_coins(request):
     if (request.method == 'GET'):
