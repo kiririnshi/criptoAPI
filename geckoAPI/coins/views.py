@@ -16,6 +16,11 @@ ACTIVO = 'BTC'
 START_DATE = '2026-01-01'
 END_DATE = '2026-03-01' # Por ahora no estoy usando la fecha actual, asi que el numero de objetos creados debe mantenerse constante.
 
+def get_graph(request):
+    if(request.method == 'GET'):
+        template = loader.get_template('index.html')
+        return HttpResponse(template.render())
+    
 def get_all_coins(request):
     if (request.method == 'GET'):
         data = serializers.serialize('json', Precio.objects.all())
